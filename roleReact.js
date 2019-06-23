@@ -1,8 +1,9 @@
-const { Client, Emoji, MessageReaction } = require("discord.js"); //imports for Client, emoji handling and reactions for discord.js
-const { secretToken, messageID } = require("./config.json"); //shh secret token is secret.
+const { Client } = require("discord.js"); //imports for Client, emoji handling and reactions for discord.js
 const client = new Client();
 
-client.login(secretToken);
+var messageID = "592196378575503360";
+
+client.login(process.env.BOT_TOKEN);
 
 client.on("ready", () => {
   //to check if bot is awake
