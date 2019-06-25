@@ -25,12 +25,33 @@ client.on('raw', event => {
         //this will get the message if we haven't cached it. THEN it will grab the emoji
         reactChannel.fetchMessage(event.d.message_id)
           .then(msg => {
-            //get ok emoji reaction
+            //get ok emoji reaction, future: make into a list to choose from.
             var msgReaction = msg.reactions.get("👌");
             //grab id of users who have reacted to the message.
             var user = client.users.get(event.d.user_id);
             //GOTO: messageReactionAdd event
             client.emit('messageReactionAdd', msgReaction, user);
+          })
+          .catch(error => console.log(error));//log any errors with message handling (expected when no msg available).
+      }
+    }
+  }
+  //check event handler for reaction removal.
+  else if (eventName === 'MESSAGE_REACTION_REMOVE') {
+    if (event.d.message_id === messageID) {
+      var reactChannel = client.channels.get(event.d.channel_id);
+      if (reactChannel.messages.has(event.d.message_id)) {
+        return;
+      } else {
+        //this will get the message if we haven't cached it. THEN it will grab the emoji
+        reactChannel.fetchMessage(event.d.message_id)
+          .then(msg => {
+            //get ok emoji reaction, future: make into a list to choose from.
+            var msgReaction = msg.reactions.get("👌");
+            //grab id of users who have reacted to the message.
+            var user = client.users.get(event.d.user_id);
+            //GOTO: messageReactionRemove event
+            client.emit('messageReactionRemove', msgReaction, user);
           })
           .catch(error => console.log(error));//log any errors with message handling (expected when no msg available).
       }
@@ -55,4 +76,20 @@ client.on('messageReactionAdd', (messageReaction, user) => {
     }
   }
 
+});
+
+
+client.on('messageReactionRemove', (messageReaction, user) => {
+  //find role with name of phiRole
+  var phiRole = "PHI";
+  var role = messageReaction.message.guild.roles.find(role => role.name.toLowerCase() === phiRole.toLowerCase());
+
+
+  if (role) {
+    //when we found the role, we need to get the user's id to remove the role.
+    var member = messageReaction.message.guild.members.find(member => member.id === user.id);
+    if (member) {
+      member.removeRole(role.id);
+    }
+  }
 });
