@@ -8,7 +8,7 @@ client.login(process.env.BOT_TOKEN);
 client.on("ready", () => {
   //to check if bot is awake
   console.log(`Logged in as ${client.user.tag}!`);
-  client.user.setGame("Playing with Node.JS :)");
+  client.user.setGame("with Node.JS :)");
 });
 
 //create a raw event handler for grabbing the user who reacted
