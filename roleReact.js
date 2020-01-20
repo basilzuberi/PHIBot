@@ -1,7 +1,7 @@
 const { Client } = require("discord.js"); //imports for Client, emoji handling and reactions for discord.js
 const client = new Client();
 
-var messageID = "668622508701777940";
+var messageID = "668623232861208596";
 
 client.login(process.env.BOT_TOKEN);
 
