@@ -7,6 +7,8 @@ const cheerio = require('cheerio');
 const axios = require('axios');
 const year = 79; //This is the year code for 2020. TODO: Let you search different years
 
+exports.scrapeCourse = scrapeCourse;
+
 /* Scrapes a Laurier course
  * @param {String} courseID (e.g. CP312, GG231, ST259)
  * @return {Promise} A promise that resolves to an object {id, title, description, requirements, exclusions}
@@ -52,9 +54,7 @@ function _getCourseInfo (courseURL) {
                 exclusions: $('.exclusions').text()
             });
 
-            reject("error");
+            reject("Error in obtaining course info.");
         });
     });
 }
-
-scrapeCourse('cp104').then(result => console.log(result));

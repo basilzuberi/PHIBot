@@ -1,9 +1,10 @@
 const { Client } = require("discord.js"); //imports for Client, emoji handling and reactions for discord.js
 const client = new Client();
+const scraper = require('./courseScraper');
 
 var messageID = "668623232861208596";
 
-client.login(process.env.BOT_TOKEN);
+//client.login(process.env.BOT_TOKEN);
 
 client.on("ready", () => {
   //to check if bot is awake
@@ -93,4 +94,26 @@ client.on('messageReactionRemove', (messageReaction, user) => {
       member.removeRole(role.id);
     }
   }
+});
+
+// Message handlers
+client.on('message', msg => {
+  var content = msg.content;
+  var command = content.split(" ")[0];
+
+  if (command.substring(0,1) == "!") console.log("Command received: " + content);
+
+  if (command == "!course") {
+    var courseID = content.split(" ")[1];
+    console.log("Scraping course " + courseID);
+
+    scraper.scrapeCourse(courseID)
+    .then((courseInfo) => {
+      msg.channel.send(`**${courseID.toUpperCase()} ${courseInfo.title}**\n${courseInfo.description}\n\nRequirements: ${courseInfo.required}\nExclusions: ${courseInfo.exclusions}`);
+    })
+    .catch(() => {
+      msg.channel.send("I couldn't find that course, sorry!");
+    });
+  }
+  
 });
