@@ -4,7 +4,7 @@ const scraper = require('./courseScraper');
 
 var messageID = "668623232861208596";
 
-//client.login(process.env.BOT_TOKEN);
+client.login(process.env.BOT_TOKEN);
 
 client.on("ready", () => {
   //to check if bot is awake
@@ -101,19 +101,24 @@ client.on('message', msg => {
   var content = msg.content;
   var command = content.split(" ")[0];
 
-  if (command.substring(0,1) == "!") console.log("Command received: " + content);
+  if (command.substring(0,1) == "!") {
+    console.log(`Command received from ${msg.author}: ${command}`);
 
-  if (command == "!course") {
-    var courseID = content.split(" ")[1];
-    console.log("Scraping course " + courseID);
+    if (command == "!help") {
+      msg.channel.send("**Available commands:**\n!course <course code>: Get info on a Laurier course.")
+    }
 
-    scraper.scrapeCourse(courseID)
-    .then((courseInfo) => {
-      msg.channel.send(`**${courseID.toUpperCase()} ${courseInfo.title}**\n${courseInfo.description}\n\nRequirements: ${courseInfo.required}\nExclusions: ${courseInfo.exclusions}`);
-    })
-    .catch(() => {
-      msg.channel.send("I couldn't find that course, sorry!");
-    });
-  }
+    else if (command == "!course") {
+      var courseID = content.split(" ")[1];
+      console.log("Scraping course " + courseID);
   
+      scraper.scrapeCourse(courseID)
+      .then((courseInfo) => {
+        msg.channel.send(`**${courseID.toUpperCase()} ${courseInfo.title}**\n${courseInfo.description}\n\nRequirements: ${courseInfo.required}\nExclusions: ${courseInfo.exclusions}`);
+      })
+      .catch(() => {
+        msg.channel.send("I couldn't find that course, sorry!");
+      });
+    }
+  }
 });
