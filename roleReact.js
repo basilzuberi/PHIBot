@@ -1,6 +1,6 @@
 const { Client } = require("discord.js"); //imports for Client, emoji handling and reactions for discord.js
 const client = new Client();
-const scraper = require('./courseScraper');
+const { commands } = require("commands.js");
 
 var messageID = "668623232861208596";
 
@@ -98,27 +98,14 @@ client.on('messageReactionRemove', (messageReaction, user) => {
 
 // Message handlers
 client.on('message', msg => {
-  var content = msg.content;
-  var command = content.split(" ")[0];
+  var command = msg.content.split(" ")[0];
 
   if (command.substring(0,1) == "!") {
     console.log(`Command received from ${msg.author}: ${command}`);
 
-    if (command == "!help") {
-      msg.channel.send("**Available commands:**\n!course <course code>: Get info on a Laurier course.")
-    }
-
-    else if (command == "!course") {
-      var courseID = content.split(" ")[1];
-      console.log("Scraping course " + courseID);
-  
-      scraper.scrapeCourse(courseID)
-      .then((courseInfo) => {
-        msg.channel.send(`**${courseID.toUpperCase()} ${courseInfo.title}**\n${courseInfo.description}\n\nRequirements: ${courseInfo.required}\nExclusions: ${courseInfo.exclusions}`);
-      })
-      .catch(() => {
-        msg.channel.send("I couldn't find that course, sorry!");
-      });
-    }
+	// Only run the command if it exists
+	if( command in commands ) {
+		commands[command]( msg );
+	}
   }
 });
