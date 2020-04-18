@@ -32,7 +32,7 @@ client.on('raw', event => {
             //grab id of users who have reacted to the message.
             var user = client.users.get(event.d.user_id);
             //GOTO: messageReactionAdd event
-            client.emit('messageReactionAdd', msgReaction, user);
+            client.emit('customMessageReactionAdd', msgReaction, user);
           })
           .catch(error => console.log(error));//log any errors with message handling (expected when no msg available).
       }
@@ -53,7 +53,7 @@ client.on('raw', event => {
             //grab id of users who have reacted to the message.
             var user = client.users.get(event.d.user_id);
             //GOTO: messageReactionRemove event
-            client.emit('messageReactionRemove', msgReaction, user);
+            client.emit('customMessageReactionRemove', msgReaction, user);
           })
           .catch(error => console.log(error));//log any errors with message handling (expected when no msg available).
       }
@@ -62,8 +62,9 @@ client.on('raw', event => {
 });
 
 //handler for giving roles on reaction add
-
-client.on('messageReactionAdd', (messageReaction, user) => {
+// TODO: We can use the MessageReaction(Add/Remove) event here, but it will be a relatively big change.
+// Reference: https://discordjs.guide/popular-topics/reactions.html#listening-for-reactions-on-old-messages
+client.on('customMessageReactionAdd', (messageReaction, user) => {
 
   //find role with name of phiRole
   var phiRole = "PHI";
@@ -81,7 +82,7 @@ client.on('messageReactionAdd', (messageReaction, user) => {
 });
 
 
-client.on('messageReactionRemove', (messageReaction, user) => {
+client.on('customMessageReactionRemove', (messageReaction, user) => {
   //find role with name of phiRole
   var phiRole = "PHI";
   var role = messageReaction.message.guild.roles.find(role => role.name.toLowerCase() === phiRole.toLowerCase());
