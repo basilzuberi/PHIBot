@@ -116,29 +116,54 @@ client.on('message', (msg) => {
 				.catch(() => {
 					msg.channel.send("I couldn't find that course, sorry!");
 				});
-		} else if (command == '!toggle') {
+		} else if (!msg.author.bot && command == '!enroll') {
 			const courseID = content.split(' ')[1];
-			const role = msg.guild.roles.find((role) => role.name.toUpperCase() === courseID.toUpperCase());
-			console.log(`Adding user to course ${courseID}`);
-			// Check if course is valid by looking at all channels:
-			if (msg.guild.channels.find((channel) => channel.name === courseID)) {
-				// Check if that role exists
-				if (role) {
-					// Check if user has the role already
-					if (!msg.member.roles.find((role) => role.name === courseID)) {
-						// Add the role poggers
-						msg.member.addRole(role);
-						msg.channel.send('Added.');
+			const role = msg.guild.roles.find((role) => role.name.toUpperCase() === courseID.toUpperCase())
+			// Check that course code is valid
+			if (isNaN(courseID.substring(0,2)) && !isNaN(courseID.substring(2))) {
+				// Check if course exists in text channels:
+				if (courseID && msg.guild.channels.find((channel) => channel.name === courseID.toLowerCase())) {
+					// If role doesn't exist, create it
+					if(!role) {
+						console.log(`${courseID.toUpperCase()} role does not exist, creating now...`)
+						msg.guild.createRole({
+							name: courseID.toUpperCase(),
+							permissions: [
+								'READ_MESSAGES',
+								'CHANGE_NICKNAME',
+								'SEND_MESSAGES',
+								'EMBED_LINKS',
+								'ATTACH_FILES',
+								'READ_MESSAGE_HISTORY',
+								'USE_EXTERNAL_EMOJIS',
+								'ADD_REACTIONS',
+								'CONNECT',
+								'SPEAK',
+								'USE_VAD'
+							]
+						// Assign new role to user
+						}).then(function(newRole){
+							msg.member.addRole(newRole);
+							msg.channel.send(`${msg.author} You have successfully been enrolled in ${role}`);
+						});
 					} else {
-						// Remove the role poggers
-						msg.member.removeRole(role);
-						msg.channel.send('Removed.');
+						// Check if user has the role already
+						if (!msg.member.roles.find((role) => role.name === courseID.toUpperCase())) {
+							// Add the role
+							msg.member.addRole(role);
+							msg.channel.send(`${msg.author} You have successfully been enrolled in ${role.name}`);
+						} else {
+							// Remove the role
+							msg.member.removeRole(role);
+							msg.channel.send(`${msg.author} You have successfully been unenrolled from ${role.name}`);
+						}
 					}
 				} else {
-					msg.channel.send('That role does not exist, please DM a Moderator to add the role.');
+					msg.channel.send('!enroll <course> [Error: Please ensure that you are using an existing courseID or contact a moderator for further assistance]');
 				}
+			// if course code is invalid
 			} else {
-				msg.channel.send('This server does not have that channel, please DM a Moderator to add the course or double-check.');
+				msg.channel.send(`!enroll <course> [Error: Invalid course code (${courseID.toUpperCase()})]`);
 			}
 		}
 	}
