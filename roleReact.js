@@ -143,3 +143,12 @@ client.on('message', (msg) => {
 		}
 	}
 });
+
+/**
+ * Give course channels their respective reminders
+ */
+const MINUTE_INTERVAL = 1000 * 60;
+
+setInterval(() => {
+	console.log('ticking');
+}, MINUTE_INTERVAL);
