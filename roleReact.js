@@ -125,16 +125,16 @@ client.on('message', (msg) => {
 				.catch(() => {
 					msg.channel.send("I couldn't find that course, sorry!");
 				});
-		// enrolls users into a certain course and assigns them the appropriate role
+			// enrolls users into a certain course and assigns them the appropriate role
 		} else if (!msg.author.bot && command == '!enroll') {
 			const courseID = content.split(' ')[1];
 			const role = msg.guild.roles.find((role) => role.name.toUpperCase() === courseID.toUpperCase())
 			// Check that course code is valid
-			if (isNaN(courseID.substring(0,2)) && !isNaN(courseID.substring(2))) {
+			if (isNaN(courseID.substring(0, 2)) && !isNaN(courseID.substring(2))) {
 				// Check if course exists in text channels:
 				if (courseID && msg.guild.channels.find((channel) => channel.name === courseID.toLowerCase())) {
 					// If role doesn't exist, create it
-					if(!role) {
+					if (!role) {
 						console.log(`${courseID.toUpperCase()} role does not exist, creating now...`)
 						msg.guild.createRole({
 							name: courseID.toUpperCase(),
@@ -151,8 +151,8 @@ client.on('message', (msg) => {
 								'SPEAK',
 								'USE_VAD'
 							]
-						// Assign new role to user
-						}).then(function(newRole){
+							// Assign new role to user
+						}).then(function (newRole) {
 							msg.member.addRole(newRole);
 							msg.channel.send(`${msg.author} You have successfully been enrolled in ${role}`);
 						});
@@ -171,22 +171,21 @@ client.on('message', (msg) => {
 				} else {
 					msg.channel.send('!enroll <course> [Error: Please ensure that you are using an existing courseID or contact a moderator for further assistance]');
 				}
-			// If course code is invalid
+				// If course code is invalid
 			} else {
 				msg.channel.send(`!enroll <course> [Error: Invalid course code (${courseID.toUpperCase()})]`);
 			}
-		// Adds a job to the schedule
+			// Adds a job to the schedule
 		} else if (command == '!addEvent' && !msg.author.bot) {
-			if(msg.member.roles.find(role => role.name === 'Moderator')){
+			if (msg.member.roles.find(role => role.name === 'Moderator')) {
 				let [courseID, hour, minute, day] = content.split(' ').slice(1);
 				// check that all params were included and valid
-				if(	(!Number.isInteger(Number.parseInt(hour)) || hour < 0 || hour > 23) ||
-						(!Number.isInteger(Number.parseInt(minute)) || minute < 0 || minute > 59) ||
-						(!Number.isInteger(Number.parseInt(day)) || day < 0 || day > 6))
-				{
+				if ((!Number.isInteger(Number.parseInt(hour)) || hour < 0 || hour > 23) ||
+					(!Number.isInteger(Number.parseInt(minute)) || minute < 0 || minute > 59) ||
+					(!Number.isInteger(Number.parseInt(day)) || day < 0 || day > 6)) {
 					msg.channel.send('!addEvent <courseID> <hour> <minute> <day> [Error: invalid parameters]')
 				} else {
-					if(msg.guild.channels.find((channel) => channel.name === courseID.toLowerCase())) {
+					if (msg.guild.channels.find((channel) => channel.name === courseID.toLowerCase())) {
 						let job = createJob(courseID, hour, minute, day);
 						msg.channel.send(`Event was created successfully:\n${job.name}`);
 					} else {
@@ -197,10 +196,10 @@ client.on('message', (msg) => {
 			} else {
 				msg.channel.send('Only Moderators can access this function');
 			}
-		// Lists all events that have been stored in jobs[]
+			// Lists all events that have been stored in jobs[]
 		} else if (command == '!listEvents' && !msg.author.bot) {
-			if(msg.member.roles.find(role => role.name === 'Moderator')) {
-				if(jobs.length == 0)
+			if (msg.member.roles.find(role => role.name === 'Moderator')) {
+				if (jobs.length == 0)
 					msg.channel.send('There are no events. Try creating one using !addEvent');
 				else {
 					let output = '';
@@ -210,28 +209,28 @@ client.on('message', (msg) => {
 			} else {
 				msg.channel.send('Only Moderators can access this function');
 			}
-		// Removes event at given index
+			// Removes event at given index
 		} else if (command == `!removeEvent` && !msg.author.bot) {
-			if(msg.member.roles.find(role => role.name === 'Moderator')) {
+			if (msg.member.roles.find(role => role.name === 'Moderator')) {
 				let eventID = content.split(' ')[1];
 				let found = false;
 
-				if(!eventID) {
+				if (!eventID) {
 					msg.channel.send('!removeEvent <Event ID>');
 				} else {
 					// need to create unique ID's that wont repeat
 					let job = '';
 					// search for event with given ID
-					for(let i = jobs.length-1; i >= 0; i--){
+					for (let i = jobs.length - 1; i >= 0; i--) {
 						job = jobs[i].name;
-						if(job.endsWith(`[${eventID}]`)){
+						if (job.endsWith(`[${eventID}]`)) {
 							jobs.splice(i, 1);
 							found = true;
 							break;
 						}
 					}
 
-					if(found) {
+					if (found) {
 						msg.channel.send(`Event [${job}] has successfully been removed`);
 					} else {
 						msg.channel.send(`!removeEvents <Event ID> [Error: Event ID ${eventID} not found, try using !listEvents to see Event IDs`);
@@ -248,13 +247,15 @@ client.on('message', (msg) => {
  * Create scheduled jobs to ping the appropriate
  * text channels on a scheduled interval.
  */
-function createJob(courseID, hour, minute, day){
+function createJob(courseID, hour, minute, day) {
 	let job = schedule.scheduleJob(
 		`${courseID.toUpperCase()}: ${moment(`${hour}:${minute}:${day}`, 'hh:mm:d').format("dddd [at] hh:mma")} -- Event ID:[${generateID()}]`,
-		{hour: hour,
-		minute: minute,
-		dayOfWeek: day},
-		function(){
+		{
+			hour: hour,
+			minute: minute,
+			dayOfWeek: day
+		},
+		function () {
 			let channel = client.channels.find(channel => channel.name === courseID.toLowerCase());
 			let role = guild.roles.find(role => role.name === courseID.toUpperCase());
 			channel.send(`${role} Class is starting!`);
@@ -269,9 +270,9 @@ function createJob(courseID, hour, minute, day){
 /**
  * Generates a pseudo-random ID for an event
  */
-function generateID(){
+function generateID() {
 	let result = '';
-	for(let i = 0; i < 3; i++){
+	for (let i = 0; i < 3; i++) {
 		let digit = (Math.floor(Math.random() * uniqueID * 10)) % 10;
 		console.log(digit);
 		result += digit.toString();
