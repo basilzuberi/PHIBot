@@ -20,7 +20,6 @@ client.on('ready', () => {
 	console.log(`Logged in as ${client.user.tag}!`);
 	client.user.setGame('with Node.JS :)');
 	guild = client.guilds.get(serverID);
-	console
 });
 
 //create a raw event handler for grabbing the user who reacted
@@ -200,12 +199,16 @@ client.on('message', (msg) => {
 			}
 		// Lists all events that have been stored in jobs[]
 		} else if (command == '!listEvents' && !msg.author.bot) {
-			if(jobs.length == 0)
-				msg.channel.send('There are no events. Try creating one using !addEvent');
-			else {
-				let output = '';
-				jobs.forEach(job => output += job.name + '\n');
-				msg.channel.send(output);
+			if(msg.member.roles.find(role => role.name === 'Moderator')) {
+				if(jobs.length == 0)
+					msg.channel.send('There are no events. Try creating one using !addEvent');
+				else {
+					let output = '';
+					jobs.forEach(job => output += job.name + '\n');
+					msg.channel.send(output);
+				}
+			} else {
+				msg.channel.send('Only Moderators can access this function');
 			}
 		// Removes event at given index
 		} else if (command == `!removeEvent` && !msg.author.bot) {
@@ -263,6 +266,9 @@ function createJob(courseID, hour, minute, day){
 	return job;
 }
 
+/**
+ * Generates a pseudo-random ID for an event
+ */
 function generateID(){
 	let result = '';
 	for(let i = 0; i < 3; i++){
