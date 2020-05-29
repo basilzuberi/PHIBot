@@ -1,9 +1,17 @@
 const { Client } = require('discord.js'); //imports for Client, emoji handling and reactions for discord.js
 const client = new Client();
 const scraper = require('./courseScraper');
+const schedule = require('node-schedule');
+const moment = require('moment');
+const jobs = [];
 require('dotenv-flow').config();
 
 var messageID = '668623232861208596';
+var serverID = '224916296179908609'; // PHI's server ID (needs to be changed for different servers)
+let guild = '';
+
+// generates unique event IDs
+let uniqueID = 1;
 
 client.login(process.env.BOT_TOKEN);
 
@@ -11,6 +19,8 @@ client.on('ready', () => {
 	//to check if bot is awake
 	console.log(`Logged in as ${client.user.tag}!`);
 	client.user.setGame('with Node.JS :)');
+	guild = client.guilds.get(serverID);
+	console
 });
 
 //create a raw event handler for grabbing the user who reacted
@@ -116,6 +126,7 @@ client.on('message', (msg) => {
 				.catch(() => {
 					msg.channel.send("I couldn't find that course, sorry!");
 				});
+		// enrolls users into a certain course and assigns them the appropriate role
 		} else if (!msg.author.bot && command == '!enroll') {
 			const courseID = content.split(' ')[1];
 			const role = msg.guild.roles.find((role) => role.name.toUpperCase() === courseID.toUpperCase())
@@ -161,19 +172,104 @@ client.on('message', (msg) => {
 				} else {
 					msg.channel.send('!enroll <course> [Error: Please ensure that you are using an existing courseID or contact a moderator for further assistance]');
 				}
-			// if course code is invalid
+			// If course code is invalid
 			} else {
 				msg.channel.send(`!enroll <course> [Error: Invalid course code (${courseID.toUpperCase()})]`);
+			}
+		// Adds a job to the schedule
+		} else if (command == '!addEvent' && !msg.author.bot) {
+			if(msg.member.roles.find(role => role.name === 'Moderator')){
+				let [courseID, hour, minute, day] = content.split(' ').slice(1);
+				// check that all params were included and valid
+				if(	(!Number.isInteger(Number.parseInt(hour)) || hour < 0 || hour > 23) ||
+						(!Number.isInteger(Number.parseInt(minute)) || minute < 0 || minute > 59) ||
+						(!Number.isInteger(Number.parseInt(day)) || day < 0 || day > 6))
+				{
+					msg.channel.send('!addEvent <courseID> <hour> <minute> <day> [Error: invalid parameters]')
+				} else {
+					if(msg.guild.channels.find((channel) => channel.name === courseID.toLowerCase())) {
+						let job = createJob(courseID, hour, minute, day);
+						msg.channel.send(`Event was created successfully:\n${job.name}`);
+					} else {
+						msg.channel.send(`!addEvent <courseID> <hour> <minute> <day> [Error: text channel ${courseID.toLowerCase()} not found]`)
+					}
+
+				}
+			} else {
+				msg.channel.send('Only Moderators can access this function');
+			}
+		// Lists all events that have been stored in jobs[]
+		} else if (command == '!listEvents' && !msg.author.bot) {
+			if(jobs.length == 0)
+				msg.channel.send('There are no events. Try creating one using !addEvent');
+			else {
+				let output = '';
+				jobs.forEach(job => output += job.name + '\n');
+				msg.channel.send(output);
+			}
+		// Removes event at given index
+		} else if (command == `!removeEvent` && !msg.author.bot) {
+			if(msg.member.roles.find(role => role.name === 'Moderator')) {
+				let eventID = content.split(' ')[1];
+				let found = false;
+
+				if(!eventID) {
+					msg.channel.send('!removeEvent <Event ID>');
+				} else {
+					// need to create unique ID's that wont repeat
+					let job = '';
+					// search for event with given ID
+					for(let i = jobs.length-1; i >= 0; i--){
+						job = jobs[i].name;
+						if(job.endsWith(`[${eventID}]`)){
+							jobs.splice(i, 1);
+							found = true;
+							break;
+						}
+					}
+
+					if(found) {
+						msg.channel.send(`Event [${job}] has successfully been removed`);
+					} else {
+						msg.channel.send(`!removeEvents <Event ID> [Error: Event ID ${eventID} not found, try using !listEvents to see Event IDs`);
+					}
+				}
+			} else {
+				msg.channel.send('Only Moderators can access this function');
 			}
 		}
 	}
 });
 
 /**
- * Give course channels their respective reminders
+ * Create scheduled jobs to ping the appropriate
+ * text channels on a scheduled interval.
  */
-const MINUTE_INTERVAL = 1000 * 60;
+function createJob(courseID, hour, minute, day){
+	let job = schedule.scheduleJob(
+		`${courseID.toUpperCase()}: ${moment(`${hour}:${minute}:${day}`, 'hh:mm:d').format("dddd [at] hh:mma")} -- Event ID:[${generateID()}]`,
+		{hour: hour,
+		minute: minute,
+		dayOfWeek: day},
+		function(){
+			let channel = client.channels.find(channel => channel.name === courseID.toLowerCase());
+			let role = guild.roles.find(role => role.name === courseID.toUpperCase());
+			channel.send(`${role} Class is starting!`);
+		}
+	);
 
-setInterval(() => {
-	console.log('ticking');
-}, MINUTE_INTERVAL);
+	jobs.push(job);
+	uniqueID++;
+	return job;
+}
+
+function generateID(){
+	let result = '';
+	for(let i = 0; i < 3; i++){
+		let digit = (Math.floor(Math.random() * uniqueID * 10)) % 10;
+		console.log(digit);
+		result += digit.toString();
+	}
+	result += uniqueID.toString() + (Math.floor(Math.random() * uniqueID * 10)) % 10;
+	return result;
+}
