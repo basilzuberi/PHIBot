@@ -7,7 +7,7 @@ const jobs = [];
 require('dotenv-flow').config();
 
 var messageID = '668623232861208596';
-var serverID = '224916296179908609'; // PHI's server ID (needs to be changed for different servers)
+var serverID = '715624985309478952'; // PHI's server ID (needs to be changed for different servers)
 let guild = '';
 
 // generates unique event IDs
@@ -128,9 +128,9 @@ client.on('message', (msg) => {
 			// enrolls users into a certain course and assigns them the appropriate role
 		} else if (!msg.author.bot && command == '!enroll') {
 			const courseID = content.split(' ')[1];
-			const role = msg.guild.roles.find((role) => role.name.toUpperCase() === courseID.toUpperCase())
 			// Check that course code is valid
-			if (isNaN(courseID.substring(0, 2)) && !isNaN(courseID.substring(2))) {
+			if (courseID && isNaN(courseID.substring(0, 2)) && !isNaN(courseID.substring(2))) {
+				const role = msg.guild.roles.find((role) => role.name.toUpperCase() === courseID.toUpperCase());
 				// Check if course exists in text channels:
 				if (courseID && msg.guild.channels.find((channel) => channel.name === courseID.toLowerCase())) {
 					// If role doesn't exist, create it
@@ -154,7 +154,7 @@ client.on('message', (msg) => {
 							// Assign new role to user
 						}).then(function (newRole) {
 							msg.member.addRole(newRole);
-							msg.channel.send(`${msg.author} You have successfully been enrolled in ${role}`);
+							msg.channel.send(`${msg.author} You have successfully been enrolled in ${newRole}`);
 						});
 					} else {
 						// Check if user has the role already
@@ -169,11 +169,11 @@ client.on('message', (msg) => {
 						}
 					}
 				} else {
-					msg.channel.send('!enroll <course> [Error: Please ensure that you are using an existing courseID or contact a moderator for further assistance]');
+					msg.channel.send('!enroll <courseID> [Error: Please ensure that you are using an existing courseID or contact a moderator for further assistance]');
 				}
-				// If course code is invalid
+				// If course code is invalid or missing
 			} else {
-				msg.channel.send(`!enroll <course> [Error: Invalid course code (${courseID.toUpperCase()})]`);
+				msg.channel.send(`!enroll <courseID> [Error: Invalid course code or missing parameter]`);
 			}
 			// Adds a job to the schedule
 		} else if (command == '!addEvent' && !msg.author.bot) {
@@ -274,7 +274,6 @@ function generateID() {
 	let result = '';
 	for (let i = 0; i < 3; i++) {
 		let digit = (Math.floor(Math.random() * uniqueID * 10)) % 10;
-		console.log(digit);
 		result += digit.toString();
 	}
 	result += uniqueID.toString() + (Math.floor(Math.random() * uniqueID * 10)) % 10;
