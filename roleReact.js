@@ -8,7 +8,7 @@ require('dotenv-flow').config();
 const { commands } = require("commands.js");
 
 var messageID = '668623232861208596';
-var serverID = '715624985309478952'; // PHI's server ID (needs to be changed for different servers)
+var serverID = '224916296179908609'; // PHI's server ID (needs to be changed for different servers)
 let guild = '';
 
 // generates unique event IDs
