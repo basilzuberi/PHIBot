@@ -3,12 +3,10 @@ const client = new Client();
 const scraper = require('./courseScraper');
 const schedule = require('node-schedule');
 const moment = require('moment');
-const jobs = [];
+const jobs = new Map();
 require('dotenv-flow').config();
 
 var messageID = '668623232861208596';
-var serverID = '715624985309478952'; // PHI's server ID (needs to be changed for different servers)
-let guild = '';
 
 // generates unique event IDs
 let uniqueID = 1;
@@ -19,7 +17,6 @@ client.on('ready', () => {
 	//to check if bot is awake
 	console.log(`Logged in as ${client.user.tag}!`);
 	client.user.setGame('with Node.JS :)');
-	guild = client.guilds.get(serverID);
 });
 
 //create a raw event handler for grabbing the user who reacted
@@ -154,7 +151,7 @@ client.on('message', (msg) => {
 							// Assign new role to user
 						}).then(function (newRole) {
 							msg.member.addRole(newRole);
-							msg.channel.send(`${msg.author} You have successfully been enrolled in ${newRole}`);
+							msg.channel.send(`${msg.author} You have successfully been enrolled in ${newRole.name}`);
 						});
 					} else {
 						// Check if user has the role already
@@ -177,7 +174,7 @@ client.on('message', (msg) => {
 			}
 			// Adds a job to the schedule
 		} else if (command == '!addEvent' && !msg.author.bot) {
-			if (msg.member.roles.find(role => role.name === 'Moderator')) {
+			if (msg.member.roles.find(role => role.name === 'Moderator' || role.name === 'engineer')) {
 				let [courseID, hour, minute, day] = content.split(' ').slice(1);
 				// check that all params were included and valid
 				if ((!Number.isInteger(Number.parseInt(hour)) || hour < 0 || hour > 23) ||
@@ -185,11 +182,13 @@ client.on('message', (msg) => {
 					(!Number.isInteger(Number.parseInt(day)) || day < 0 || day > 6)) {
 					msg.channel.send('!addEvent <courseID> <hour> <minute> <day> [Error: invalid parameters]')
 				} else {
-					if (msg.guild.channels.find((channel) => channel.name === courseID.toLowerCase())) {
-						let job = createJob(courseID, hour, minute, day);
+					let role = msg.guild.roles.find((role) => role.name.toUpperCase() === courseID.toUpperCase());
+					let channel = msg.guild.channels.find((channel) => channel.name === courseID.toLowerCase());
+					if (role && channel) {
+						let job = createJob(channel, role, courseID, hour, minute, day);
 						msg.channel.send(`Event was created successfully:\n${job.name}`);
 					} else {
-						msg.channel.send(`!addEvent <courseID> <hour> <minute> <day> [Error: text channel ${courseID.toLowerCase()} not found]`)
+						msg.channel.send(`!addEvent <courseID> <hour> <minute> <day>\n[Error: please check that text channel ${courseID.toLowerCase()} exists and that it's role has been created.]`)
 					}
 
 				}
@@ -198,8 +197,8 @@ client.on('message', (msg) => {
 			}
 			// Lists all events that have been stored in jobs[]
 		} else if (command == '!listEvents' && !msg.author.bot) {
-			if (msg.member.roles.find(role => role.name === 'Moderator')) {
-				if (jobs.length == 0)
+			if (msg.member.roles.find(role => role.name === 'Moderator' || role.name === 'engineer')) {
+				if (jobs.size == 0)
 					msg.channel.send('There are no events. Try creating one using !addEvent');
 				else {
 					let output = '';
@@ -211,27 +210,16 @@ client.on('message', (msg) => {
 			}
 			// Removes event at given index
 		} else if (command == `!removeEvent` && !msg.author.bot) {
-			if (msg.member.roles.find(role => role.name === 'Moderator')) {
+			if (msg.member.roles.find(role => role.name === 'Moderator' || role.name === 'engineer')) {
 				let eventID = content.split(' ')[1];
-				let found = false;
 
 				if (!eventID) {
 					msg.channel.send('!removeEvent <Event ID>');
 				} else {
-					// need to create unique ID's that wont repeat
-					let job = '';
-					// search for event with given ID
-					for (let i = jobs.length - 1; i >= 0; i--) {
-						job = jobs[i].name;
-						if (job.endsWith(`[${eventID}]`)) {
-							jobs.splice(i, 1);
-							found = true;
-							break;
-						}
-					}
-
-					if (found) {
-						msg.channel.send(`Event [${job}] has successfully been removed`);
+					if (jobs[eventID]) {
+						jobs[eventID].cancel();
+						jobs.delete(eventID);
+						msg.channel.send(`Event [${jobs[eventID].name}] has successfully been removed`);
 					} else {
 						msg.channel.send(`!removeEvents <Event ID> [Error: Event ID ${eventID} not found, try using !listEvents to see Event IDs`);
 					}
@@ -247,22 +235,21 @@ client.on('message', (msg) => {
  * Create scheduled jobs to ping the appropriate
  * text channels on a scheduled interval.
  */
-function createJob(courseID, hour, minute, day) {
+function createJob(channel, role, courseID, hour, minute, day) {
+	let eventID = generateID();
 	let job = schedule.scheduleJob(
-		`${courseID.toUpperCase()}: ${moment(`${hour}:${minute}:${day}`, 'hh:mm:d').format("dddd [at] hh:mma")} -- Event ID:[${generateID()}]`,
+		`${courseID.toUpperCase()}: ${moment(`${hour}:${minute}:${day}`, 'hh:mm:d').format("dddd [at] hh:mma")} -- Event ID:[${eventID}]`,
 		{
 			hour: hour,
 			minute: minute,
 			dayOfWeek: day
 		},
 		function () {
-			let channel = client.channels.find(channel => channel.name === courseID.toLowerCase());
-			let role = guild.roles.find(role => role.name === courseID.toUpperCase());
 			channel.send(`${role} Class is starting!`);
 		}
 	);
 
-	jobs.push(job);
+	jobs[eventID] = job;
 	uniqueID++;
 	return job;
 }
