@@ -174,7 +174,7 @@ client.on('message', (msg) => {
 			}
 			// Adds a job to the schedule
 		} else if (command == '!addEvent' && !msg.author.bot) {
-			if (msg.member.roles.find(role => role.name === 'Moderator' || role.name === 'engineer')) {
+			if (msg.member.roles.find(role => role.name.toLowerCase() === 'moderator' || role.name.toLowerCase() === 'engineer')) {
 				let [courseID, hour, minute, day] = content.split(' ').slice(1);
 				// check that all params were included and valid
 				if ((!Number.isInteger(Number.parseInt(hour)) || hour < 0 || hour > 23) ||
@@ -197,7 +197,7 @@ client.on('message', (msg) => {
 			}
 			// Lists all events that have been stored in jobs[]
 		} else if (command == '!listEvents' && !msg.author.bot) {
-			if (msg.member.roles.find(role => role.name === 'Moderator' || role.name === 'engineer')) {
+			if (msg.member.roles.find(role => role.name.toLowerCase() === 'moderator' || role.name.toLowerCase() === 'engineer')) {
 				if (jobs.size == 0)
 					msg.channel.send('There are no events. Try creating one using !addEvent');
 				else {
@@ -210,7 +210,7 @@ client.on('message', (msg) => {
 			}
 			// Removes event at given index
 		} else if (command == `!removeEvent` && !msg.author.bot) {
-			if (msg.member.roles.find(role => role.name === 'Moderator' || role.name === 'engineer')) {
+			if (msg.member.roles.find(role => role.name.toLowerCase() === 'moderator' || role.name.toLowerCase() === 'engineer')) {
 				let eventID = content.split(' ')[1];
 
 				if (!eventID) {
@@ -247,6 +247,7 @@ function createJob(channel, role, courseID, hour, minute, day) {
 		},
 		function () {
 			channel.send(`${role} Class is starting!`);
+			console.log(`${role} has just been pinged in channel ${channel.name}`)
 		}
 	);
 
