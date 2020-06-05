@@ -247,7 +247,7 @@ function createJob(channel, role, courseID, hour, minute, day) {
 		},
 		function () {
 			channel.send(`${role} Class is starting!`);
-			console.log(`${role} has just been pinged in channel ${channel.name}`)
+			console.log(`${role} has just been pinged in channel ${channel.name}`);
 		}
 	);
 
