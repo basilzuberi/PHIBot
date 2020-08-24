@@ -5,7 +5,7 @@
 
 const cheerio = require('cheerio'); 
 const axios = require('axios');
-const year = 79; //This is the year code for 2020. TODO: Let you search different years
+const year = 81; //This is the year code for 2020/21. TODO: Let you search different years
 
 exports.scrapeCourse = scrapeCourse;
 
@@ -28,9 +28,10 @@ function _getCourseURL (courseID) {
         axios.get(url).then((response) => {
             const courseHTML = response.data;
             const $ = cheerio.load(courseHTML);
-    
+
             // If the course showed up at the top of the search, return its URL.
-            if ($('.res > dl > dt > a > b').eq(0).text().toLowerCase().includes(courseID.toLowerCase())) {
+	// UPDATE: 2020/21 calendar uses strong instead of b tags
+            if ($('.res > dl > dt > a > strong').eq(0).text().toLowerCase().includes(courseID.toLowerCase())) {
                 resolve("https://academic-calendar.wlu.ca/" + $('.res > dl > dt > a').eq(0).attr('href'));
             }
 
